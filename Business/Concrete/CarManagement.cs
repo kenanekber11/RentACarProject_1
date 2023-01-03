@@ -9,6 +9,12 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using FluentValidation;
+using Business.ValidationRules.FluentValidation;
+using Core.CrossCuttingConcerns.Validation;
+using Core.Aspects.Autofac.Validation;
+using Business.BusinessAspects.Autofac;
+using Core.Aspects.Autofac.Caching;
 
 namespace Business.Concrete
 {
@@ -21,21 +27,17 @@ namespace Business.Concrete
             _carDal = carDal;
         }
 
+        [ValidationAspect(typeof(CarValidator))]
+        [SecuredOperation("cars.add,admin")]
+        [CacheRemoveAspect("ICarService.Get")]
         public IResult Add(Car car)
         {
-
-            if (car.Description.Length < 3 || car.DailyPrice<0)
-            {
-                return new ErrorResult(Messages.ProductNameInvalid);
-            }
-            else
-            {
-                _carDal.Add(car);
-                return new Result(true, Messages.ProductAdded);
-            }
+            _carDal.Add(car);
+            return new Result(true, Messages.ProductAdded);
+            
         }
 
-
+        [CacheAspect]
         public IDataResult<List<Car>> GetAll()
         {
             return new SuccessDataResult<List<Car>>(_carDal.GetAll());
